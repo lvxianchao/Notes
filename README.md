@@ -1,4 +1,5 @@
 # Notes
-The way to full stack
+
+- The way to full stack
 
 [Visual Studio Code](vscode)
