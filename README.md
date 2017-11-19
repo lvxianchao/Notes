@@ -9,4 +9,4 @@
 
 ## PHP
 
-- [PHP_CodeSniffer - 代码检查](PHP/PHP_CodeSniffer.md)
+- [PHP_CodeSniffer - 代码检查](PHP/PHP_CodeSniffer.md)
