@@ -13,9 +13,9 @@
 
 这里只记录下载安装和Composer安装
 
-#### 下载安装
+### 下载安装
 
-```
+``` bash
 curl -OL https://squizlabs.github.io/PHP_CodeSniffer/phpcs.phar
 php phpcs.phar -h
 
@@ -29,14 +29,12 @@ php phpcbf.phar -h
 
 再给予它们可执行权限，就可以正常使用了。
 
-#### 通过Composer安装
+### 通过Composer安装
 
 > 前提需要你的环境上安装了**Composer**。
-
 > 如果你还没有安装，可以去[Laravel - China社区](https://laravel-china.org/composer)查看如何安装并使用国内镜像。
 
 执行`composer global require "squizlabs/php_codesniffer=*"`会使用Composer进行全局安装。
-
 
 安装完成后，这两个命令并不能直接执行。
 
@@ -45,9 +43,3 @@ php phpcbf.phar -h
 你需要将这个路径添加进环境变量里，然后就可以正常使用了。
 
 [Mac - 设置环境变量](../Mac/环境变量.md)
-
-
-
-
-
-
