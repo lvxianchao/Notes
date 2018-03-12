@@ -704,6 +704,177 @@ props: {
 ![](https://ws4.sinaimg.cn/large/006tNc79ly1fp9bpn7xpij30c007ajr7.jpg)
 
 
+**动态设置组件：`:is`**
+
+
+```
+<body>
+    <main id="app">
+        <!--下面这个DIV将会替换成模板, :is属性绑定的是一个变量名称type-->
+        <!-- 这个DIV不能用template标签代替！ -->
+        <div :is="type"></div>
+
+        <!--当选择不同的单选按钮时，会将当前选中的值传递给VUE变量type，而type的改变会引发VUE重新将上面的DIV渲染，以此达到动态的效果-->
+        <div>
+            <input type="radio" v-model="type" value="comInput"> 文本框
+            <input type="radio" v-model="type" value="comTextarea"> 文本域
+        </div>
+    </main>
+</body>
+
+<script>
+    let comInput = {
+        template: '<div><input></div>',
+    };
+
+    let comTextarea = {
+        template: '<textarea></textarea>'
+    };
+
+    let app = new Vue({
+        el: '#app',
+        components: {comInput, comTextarea},
+        data: {
+            type: 'comInput'
+        }
+    });
+</script>
+```
+
+---
+
+**动画**
+
+> 可以使用animate.css动画库。
+
+
+```
+<body>
+<main id="app">
+    <button @click="type=!type">点击切换</button>
+    <!--动画用transition标签包裹-->
+    <!--这个标签的name属性用来指定动画类的名称，名称的格式如下: -->
+    <!--name-enter: 准备显示-->
+    <!--name-enter-active: 正在显示-->
+    <!--name-enter-to: 显示完毕-->
+    <!--name-leave: 准备隐藏-->
+    <!--name-leave-active: 正在隐藏-->
+    <!--name-leave-to: 隐藏完毕-->
+    <transition name="animate">
+        <h1 v-show="type">我是一个动画</h1>
+    </transition>
+</main>
+</body>
+
+<script>
+    let app = new Vue({
+        el: '#app',
+        data: {
+            type: true
+        }
+    });
+</script>
+
+<!-- 这里书写上面所指定的动画类 -->
+<style>
+    .animate-enter {
+        opacity: 0;
+    }
+
+    .animate-leaves {
+        opacity: 1;
+    }
+
+    .animate-enter-active, .animate-leave-active {
+        -webkit-transition: all 2s;
+        -moz-transition: all 2s;
+        -ms-transition: all 2s;
+        -o-transition: all 2s;
+        transition: all 2s;
+        opacity: .5;
+    }
+
+    .animate-enter-to {
+        opacity: 1;
+    }
+
+    .animate-leave-to {
+        opacity: 0;
+    }
+</style>
+```
+
+---
+
+**自定义指令**
+
+
+```
+<body>
+<main id="app">
+    <h1 v-global>我是一个全局指令</h1>
+    <h2 v-local>我是一个非全局指令</h2>
+</main>
+</body>
+
+<script>
+    // 定义全局指令和定义全局组件差不多
+    // 第一个参数为指令名称，第二个参数是一个对象，其中可以包含触需要的钩子
+    Vue.directive('global', {
+        // 三个钩子都自动传入两个参数：
+        // 第一个参数是当前元素
+        // 第二个参数是包含当前元素一些信息的对象
+
+        // 元素绑定的钩子
+        bind (el, bind) {
+            console.log(bind);
+        },
+
+        // 元素更新的钩子
+        update (el, bind) {
+            console.log(bind);
+        },
+
+        // 元素插入父节点的钩子
+        inserted (el, bind) {
+            console.log(bind);
+        }
+    });
+    let app = new Vue({
+        el: '#app',
+
+        // 局部指令，定义在Vue内部
+        directives: {
+            // 常用的钩子有bind和update
+            // 如果我们只需要这两种钩子时，就这简写成下面这样
+            // 但inserted钩子不可，需要单独定义
+            local (el, bind) {
+                console.log(bind);
+            }
+        }
+    });
+</script>
+```
+
+---
+
+**CLI**
+
+安装：`npm install -g vue-cli`
+
+注意使用淘宝镜像源或者cnpm或者yarn
+
+安装前会询问几个问题，比如项目名称，作者，使用`npm`还是`yarn`，，是否安装`vue-route`等，`vue-router`选是，其它的暂时选否。
+
+安装完成后，可以初始化一个webpack模板的项目：`vue init webpack cli`
+
+这样经过一段下载时间以后，会在当前目录下生成一个`cli`的目录，这就是我们刚才初始化的项目。
+
+进入项目，执行`npm run dev`，初始化完成后，会收到提示，访问`http://localhost:8080`即可以看到我们的项目了。
+
+好激动，终于看到点像样的东西了。
+
+![](https://ws1.sinaimg.cn/large/006tNc79ly1fpah4o1sd9j31kw0wejsa.jpg)
 
 
 
