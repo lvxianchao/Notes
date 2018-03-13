@@ -111,7 +111,7 @@ var app = new Vue({
 
 `v-for`用来循环：
 
-```
+```vue
 // items 为要遍历的变量，通常是一个数组。
 // item 为当前遍历的一条数据。
 v-for="item in items"
@@ -747,8 +747,7 @@ props: {
 
 > 可以使用animate.css动画库。
 
-
-```
+```html
 <body>
 <main id="app">
     <button @click="type=!type">点击切换</button>
@@ -876,8 +875,60 @@ props: {
 
 ![](https://ws1.sinaimg.cn/large/006tNc79ly1fpah4o1sd9j31kw0wejsa.jpg)
 
+---
+
+**路由**
 
 
+```Html
+<body>
+<script>
+    // VUE 路由
+    // 按照我的理解，路由的原理就是锚点。
+    // 通过点击不同的锚点，路由器会将页面处理，显示我们要拜访的锚点（组件），将其它的锚点隐藏掉。
+</script>
+    <main id="app">
+        <!--定义锚点-->
+        <router-link to="home">Home</router-link>
+        <router-link to="admin">Admin</router-link>
+        <!--定义显示组件的容器: 路由处理后的组件会显示在这个容器里-->
+        <router-view></router-view>
+    </main>
+</body>
+<script src="vue.js"></script>
+<!--引入路由文件-->
+<script src="vue-router.js"></script>
+<script>
+    // 定义两个组件：home, admin
+    const home = {
+        template: '<h1>Home</h1>'
+    };
+    const admin = {
+        template: '<h1>Admin</h1>',
+    };
 
+    // 定义路由
+    // 每一个路由都是一个对象
+    // 每个对象有两个属性：path, component
+    // path: 访问的地址（锚点）
+    // component: 当访问这个地址时，要显示的组件
+    let routes = [
+        {path: '/home', component: home},
+        {path: '/admin', component: admin}
+    ];
 
+    // 实例化路由器
+    let router = new VueRouter({
+        // routes: routes
+        routes
+    });
 
+    // 实例化 VUE
+    new Vue({
+        el: '#app',
+        // router: router
+        router
+    });
+
+</script>
+```
