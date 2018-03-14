@@ -932,3 +932,123 @@ props: {
 
 </script>
 ```
+
+**路由参数**
+
+``` html
+<body>
+
+<div id="app">
+    <router-link to="/home">Home</router-link>
+    <router-view></router-view>
+</div>
+
+<!--组件模板-->
+<script type="text/x-template" id="home">
+    <div>
+        <!--在模板里输入路由参数：使用 $route.params 来获取所有参数，`id`为在路由规则里定义的具体的参数名称-->
+        {{ $route.params.id }}
+        <br>
+        <button @click="showAll">获取全部参数对象</button>
+        <button @click="showID">获取参数：ID的值</button>
+    </div>
+</script>
+
+<script>
+    // 定义组件
+    const home = {
+        template: '#home',
+        // 在组件里获取参数：this.$route.params.id
+        methods: {
+            showAll () {
+                console.log(this.$route.params);  // {id: 99}
+            },
+            showID () {
+                console.log(this.$route.params.id);  // 99
+            }
+        }
+    };
+
+    // 定义路由
+    let routes = [
+        // 路由规则里定义参数：`:id`代表参数名称。
+        // 如果想传参99，可以写成：`/home/99`
+        {path: '/home/:id', component: home},
+    ];
+
+    // 实例化路由器
+    let router = new VueRouter({routes});
+
+    // 实例化 VUE
+    new Vue({
+        el: '#app',
+        router
+    });
+
+</script>
+</body>
+```
+
+**参数默认值**
+
+```html
+<body>
+
+<div id="app">
+    <router-link to="/home">Home</router-link>
+    <router-view></router-view>
+</div>
+
+<!--组件模板-->
+<script type="text/x-template" id="home">
+    <div>
+        {{ id }}
+    </div>
+</script>
+
+<script>
+    // 定义组件
+    const home = {
+        template: '#home',
+        // 可以将参数的默认值定义在data里
+        // 但如果只在这里定义，那么我们获取到的参数值，永远都是这里定义的数据。
+        data () {
+            return {
+                id: 0
+            }
+        },
+        // 所以，当我们真的传参进来的时候，如果想获取正确的参数，需要通过data里的变量来存储一下
+        // Vue给提供挂载点用于在页面元素渲染前做一些准备。
+        // 我们在这个方法里，先判断有没有传参进来。
+        // 如果有传参，那么我们就将这个参数的值赋给data里的变量
+        // 如果没有，那么参数就默认是data里的变量
+        mounted () {
+            if (this.$route.params.id) {
+                this.id = this.$route.params.id;
+            }
+            // 这里也可以定义成其它的，比如变量里的ID需要预告定义我们给了0为初始值。
+            // 如果我实际上需要定义为1的话，在这里也可以这样写：
+            this.id = this.$route.params.id? this.$route.params.id: 1;
+        }
+    };
+
+    // 定义路由
+    let routes = [
+        // 参数名后接`?`代码这个参数有没有都可以。
+        // 如果访问路由的时候，没传这个参数，这个参数会定义为`undefinde`。
+        // 我们也可以通过手段给其赋予默认值。
+        {path: '/home/:id?', component: home},
+    ];
+
+    // 实例化路由器
+    let router = new VueRouter({routes});
+
+    // 实例化 VUE
+    new Vue({
+        el: '#app',
+        router
+    });
+
+</script>
+</body>
+```
