@@ -316,7 +316,7 @@ VUE里组件分为：全局组件和局部组件。
 
 使用`template`声明组件的HTML模板
 
-```
+```html
 <body>
     <main id="app">
         <vue-com></vue-com>
@@ -361,7 +361,7 @@ VUE里组件分为：全局组件和局部组件。
 模板里如果有多个HTML元素，用引号包裹会比较麻烦，可以使用空白模板来声明。
 
 
-```
+```html
 <body>
     <main id="app">
         // 向组件传递参数，以声明属性的方式。
@@ -414,7 +414,7 @@ VUE里组件分为：全局组件和局部组件。
 **props的数据验证**
 
 
-```
+```js
 props: {
     // 验证lists属性
     lists: {
@@ -442,7 +442,7 @@ props: {
 **组件间的通信：子组件调用父组件的事件**
 
 
-```
+```html
 <body>
 <!--子组件触发父组件的事件，需要触发父组件留给子组件的触发器。-->
 <!--所谓触发器，类似于一个接口的东西，是子组件和父组件事件间的唯一关联。-->
@@ -497,7 +497,7 @@ props: {
 **组件间的通信：数据同步**
 
 
-```
+```html
 <body>
     <main id="app">
         <!-- 这里不用.sync也可以同步数据！！！？？？ -->
@@ -1051,4 +1051,950 @@ props: {
 
 </script>
 </body>
+```
+
+**路由：别名的使用和文章列表到文章详情的处理**
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="vue.js"></script>
+    <script src="vue-router.js"></script>
+    <title>router别名与文章列表与文章详情页面的跳转</title>
+</head>
+
+<body>
+    <div id="app">
+        <router-view></router-view>
+    </div>
+</body>
+
+<!--首页模板，用来显示文章列表-->
+<script type="text/x-template" id="home">
+    <div>
+        <ul>
+            <!-- 遍历文章数据 -->
+            <li v-for="v in data">
+                <!--设置一个链接，连接到文章详情页的路由，并传递当前文章的ID-->
+                <router-link :to="{name: 'content', params: {id: v.id}}">{{ v.title }}</router-link>
+            </li>
+        </ul>
+    </div>
+</script>
+
+<!--文章详情页模板：输入文章的相关信息-->
+<script type="text/x-template" id="content">
+    <div>
+        <ul>
+            <li>编号：{{ article.id }}</li>
+            <li>标题：{{ article.title }}</li>
+            <li>内容：{{ article.content }}</li>
+        </ul>
+
+        <!--返回首页链接-->
+        <router-link to="/">返回首页</router-link>
+    </div>
+</script>
+
+<script>
+    // 定义一组文章数据，假设有这么一组文章数据。
+    let data = [
+        {id: 1, title: '文章1', content: '这里是文章1的内容'},
+        {id: 2, title: '文章2', content: '这里是文章2的内容'},
+    ];
+
+    // 首页组件：把所有文章的数据存储在属性里，再由模板里遍历输入每一篇文章的标题链接
+    const home = {
+        template: '#home',
+        data () {
+            return {
+                data
+            }
+        }
+    };
+
+    // 文章详情页组件：输入文章的相关信息。
+    // 当在首页点击了带有文章ID参数的标题链接以后，路由器将请求下发到这个组件。
+    // 组件里定义了一个article属性用来存放即将要获取的文章的数据。
+    // 获取文章数据要在挂载点完成（视图渲染完成前）
+    const content = {
+        template: '#content',
+        data () {
+            return {
+                // 用来存放文章相关信息的属性
+                article: {}
+            }
+        },
+
+        // 挂载点：
+        // 获取路由传递来的参数ID。
+        // 通过ID，获取这篇文章的数据。
+        // 将文章数据转存到当前组件的属性article里，组件里就可以渲染了。
+        mounted () {
+            // 获取路由传递来的参数ID
+            let id = this.$route.params.id;
+
+            // 将对应id的文章数据转存到属性里
+            data.forEach((article)=>{
+                if (article.id == id) {
+                    this.article = article;
+                }
+            });
+        }
+    };
+
+    // 定义路由规则
+    let routes = [
+        {path: '/', component: home},
+        {path: '/content/:id', component: content, name: 'content'}
+    ];
+
+    // 实例化路由器
+    let router = new VueRouter({routes});
+
+    // 实例化VUE
+    let app = new Vue({
+        el: '#app',
+        router
+    });
+</script>
+
+</html>
+```
+
+**路由嵌套**
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="vue.js"></script>
+    <script src="vue-router.js"></script>
+    <title>路由嵌套</title>
+    <script>
+        // 假设我们有这样一个需求：
+        // 当我们从首页的文章列表里点击任意一个链接进入到相应的文章详情页面后
+        // 我们依然想看到文章列表，这时候应该怎么处理呢？
+        // 如果按照MVC的设计思想，那么此时，我们应该把文章列表页单独放到一个视图中
+        // 然后，在基本布局结构页面中加载
+        // 而，文章详情页继承基本布局页面以后，就自然会有了文章列表
+        // 依我看，在VUE中也大致是这个思路，不过做法有些不同
+        // 因为我们的首页即文章列表页，其实就是一个组件
+        // 当路由将请求转发到这个组件后，组件将模盛放在根路由视图中（根节点的<router-view></router-view>）
+        // 所以，按照这种思路走下去，我们也应该把文章详情页的组件渲染到文章列表组件里，这样就能达到我们想要的效果了。
+        // 所以，我们需要在首页组件的模板里，定义一个路由视图，用来盛放文章详情页的渲染结果。
+        // 这种做法，也称之为路由嵌套
+    </script>
+</head>
+
+<body>
+<div id="app">
+    <!--根节点的路由视图，用来盛放首页组件的渲染效果-->
+    <router-view></router-view>
+</div>
+</body>
+
+<!--首页模板，用来显示文章列表-->
+<script type="text/x-template" id="home">
+    <div>
+        <ul>
+            <!--遍历文章数据-->
+            <li v-for="v in data">
+                <!--设置一个链接，连接到文章详情页的路由，并传递当前文章的ID-->
+                <router-link :to="{name: 'content', params: {id: v.id}}">{{ v.title }}</router-link>
+            </li>
+        </ul>
+
+        <!--在首页模板里定义一个路由视图，用来盛放文章详情页-->
+        <router-view></router-view>
+    </div>
+</script>
+
+<!--文章详情页模板：输入文章的相关信息-->
+<script type="text/x-template" id="content">
+    <div>
+        <ul>
+            <li>编号：{{ article.id }}</li>
+            <li>标题：{{ article.title }}</li>
+            <li>内容：{{ article.content }}</li>
+        </ul>
+    </div>
+</script>
+
+<script>
+    // 定义一组文章数据，假设有这么一组文章数据。
+    let data = [
+        {id: 1, title: '文章1', content: '这里是文章1的内容'},
+        {id: 2, title: '文章2', content: '这里是文章2的内容'},
+    ];
+
+    // 首页组件：把所有文章的数据存储在属性里，再由模板里遍历输入每一篇文章的标题链接
+    const home = {
+        template: '#home',
+        data() {
+            return {
+                data
+            }
+        }
+    };
+
+    // 文章详情页组件：输入文章的相关信息。
+    const content = {
+        template: '#content',
+        data() {
+            return {
+                // 用来存放文章相关信息的属性
+                article: {}
+            }
+        },
+
+        // 挂载点：
+        mounted() {
+            // 获取路由传递来的参数ID
+            let id = this.$route.params.id;
+            // 将对应id的文章数据转存到属性里
+            data.forEach((article) => {
+                if (article.id == id) {
+                    this.article = article;
+                }
+            });
+        }
+    };
+
+    // 定义路由规则
+    let routes = [
+        {
+            // 首页的路由
+            // 因为我们需要将文章详情页渲染到这个组件里
+            // 这时候，首页和详情页的关系感觉像是所属关系
+            // 即：详情页属于首页
+            // 所以我们需要用children这个属性，将文章详情页的路由定义为首页的子路由。
+            path: '/', component: home, children: [
+                {path: '/content/:id', component: content, name: 'content'}
+            ]
+        },
+
+    ];
+
+    // 实例化路由器
+    let router = new VueRouter({routes});
+
+    // 实例化VUE
+    let app = new Vue({
+        el: '#app',
+        router
+    });
+</script>
+<script>
+    // 存在的问题：
+    // 如果你测试了代码，相信你一定会发现一个问题：
+    // 现在我们的页面跳转不灵了。
+    // 且只有在每次刷新的时候才会得到正确的文章详情信息，这可不是我们所期待的。
+    // 至于为什么会这样以及如何解决这个问题，见下一篇代码
+</script>
+</html>
+```
+
+**路由监听**
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="vue.js"></script>
+    <script src="vue-router.js"></script>
+    <title>路由监听</title>
+    <script>
+        // 上一篇代码中，我们假定了一个需求，并学习了路由嵌套来应对这个需求场景。
+        // 虽然效果达到了（一定程度上），但却仍然有一个问题：页面不能正确地渲染数据。
+        // 现在我们来分析一下为什么会产生这个问题。
+        // 首先，我们知道，VUE的组件是懒加载的
+        // 也就是说，我们的详情页是放在首页里渲染的
+        // 而当我们无论点击哪一篇文章的标题链接时，过是在首页里渲染的
+        // 所以这对于VUE来说，并没有发生变化（其实路由是变了的）。
+        // 所以视图不会重新渲染
+        // 而要解决这个问题也很简单：我们去监听路由的参数
+        // 当我们所处在文章1的详情页时，路由应该是：`/content/1`
+        // 而当我们点击了文章2的标题链接后，路由应该达到了：`/content/2`
+        // 所以我们监听路由变化，然后去重新渲染视图，就可以解决这个问题了。
+    </script>
+</head>
+
+<body>
+<div id="app">
+    <!--根节点的路由视图，用来盛放首页组件的渲染效果-->
+    <router-view></router-view>
+</div>
+</body>
+
+<!--首页模板，用来显示文章列表-->
+<script type="text/x-template" id="home">
+    <div>
+        <ul>
+            <!--遍历文章数据-->
+            <li v-for="v in data">
+                <!--设置一个链接，连接到文章详情页的路由，并传递当前文章的ID-->
+                <router-link :to="{name: 'content', params: {id: v.id}}">{{ v.title }}</router-link>
+            </li>
+        </ul>
+
+        <!--在首页模板里定义一个路由视图，用来盛放文章详情页-->
+        <router-view></router-view>
+    </div>
+</script>
+
+<!--文章详情页模板：输入文章的相关信息-->
+<script type="text/x-template" id="content">
+    <div>
+        <ul>
+            <li>编号：{{ article.id }}</li>
+            <li>标题：{{ article.title }}</li>
+            <li>内容：{{ article.content }}</li>
+        </ul>
+    </div>
+</script>
+
+<script>
+    // 定义一组文章数据，假设有这么一组文章数据。
+    let data = [
+        {id: 1, title: '文章1', content: '这里是文章1的内容'},
+        {id: 2, title: '文章2', content: '这里是文章2的内容'},
+    ];
+
+    // 首页组件：把所有文章的数据存储在属性里，再由模板里遍历输入每一篇文章的标题链接
+    const home = {
+        template: '#home',
+        data() {
+            return {
+                data
+            }
+        }
+    };
+
+    // 文章详情页组件：输入文章的相关信息。
+    const content = {
+        template: '#content',
+        data() {
+            return {
+                // 用来存放文章相关信息的属性
+                article: {}
+            }
+        },
+
+        // 挂载点：
+        mounted() {
+            // 绑定数据的方法
+            this.load();
+        },
+
+        // 监听路由
+        watch: {
+            // 注意写法
+            // 每次访问路由的时候，都会携带两个参数：，到哪个路由去，从哪个路由来。
+            // 只有在路由发生变化的时候，才会触发这个方法
+            // 所以我们在这个方法里重新处理一下文章详情组件里数据VUE就会重新渲染了（因为属性是绑定的）。
+            '$route' (to, from) {
+                // 因为代码是一样的，所以我们提取到methods里
+                this.load();
+            }
+        },
+
+        // 方法
+        methods: {
+            // 处理文章数据的绑定
+            load () {
+                // 获取路由传递来的参数ID
+                let id = this.$route.params.id;
+                // 将对应id的文章数据转存到属性里
+                data.forEach((article) => {
+                    if (article.id == id) {
+                        this.article = article;
+                    }
+                });
+            }
+        }
+    };
+
+    // 定义路由规则
+    let routes = [
+        {
+            // 首页的路由
+            // 因为我们需要将文章详情页渲染到这个组件里
+            // 这时候，首页和详情页的关系感觉像是所属关系
+            // 即：详情页属于首页
+            // 所以我们需要用children这个属性，将文章详情页的路由定义为首页的子路由。
+            path: '/', component: home, children: [
+                {path: '/content/:id', component: content, name: 'content'}
+            ]
+        },
+
+    ];
+
+    // 实例化路由器
+    let router = new VueRouter({routes});
+
+    // 实例化VUE
+    let app = new Vue({
+        el: '#app',
+        router
+    });
+</script>
+</html>
+```
+
+**路由：程序控制跳转**
+
+* 使用`this.$router.[X]`来进行跳转。注意这里是`$router`
+
+`[X]`包括：`push()`, `replace()`, `go()`
+
+比如说我们想跳转到文章2详情页，可以这样写：`this.$router.push('/content/2')`
+
+当然也可以把路由和参数摘出来：
+```js
+let url = {name: 'content', params:{id: 2}};
+this.$router.push(url);
+```
+
+`push()`的好处是会写入历史记录。
+
+**路由：命名视图**
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="vue.js"></script>
+    <script src="vue-router.js"></script>
+    <title>命名视图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            border: 1px solid red;
+            width: 100%;
+            height: 200px;
+        }
+        .content {
+            border: 1px solid greenyellow;
+            height: 500px;
+            width: 60%;
+            float: right;
+        }
+        .slide {
+            border: 1px solid cyan;
+            width: 30%;
+            height: 500px;
+            float: left;
+        }
+        .home1 {
+            border-radius: 20px;
+        }
+    </style>
+</head>
+
+<body>
+<div id="app">
+    <router-view class="header"></router-view>
+    <router-view class="slide" name="slide"></router-view>
+    <router-view class="content" name="content"></router-view>
+</div>
+</body>
+
+<script type="text/x-template" id="home">
+    <div class="home1">
+        home1
+    </div>
+</script>
+
+<script type="text/x-template" id="slide">
+    <div>
+        slide1
+    </div>
+</script>
+
+<script type="text/x-template" id="content">
+    <div>
+        content1
+    </div>
+</script>
+
+<script>
+    const home = {
+        template: '#home',
+    };
+
+    const slide = {
+        template: '#slide',
+    }
+
+    const content = {
+        template: '#content',
+    };
+
+    // 定义路由规则
+    let routes = [
+        {
+            // 注意组件写法为复数
+            // default为没有命名的那个视图
+            path: '/', components: {
+                default: home,
+                slide: slide,
+                content: content
+            }
+        },
+
+    ];
+
+    // 实例化路由器
+    let router = new VueRouter({routes});
+
+    // 实例化VUE
+    let app = new Vue({
+        el: '#app',
+        router
+    });
+</script>
+</html>
+```
+
+**路由：重定向**
+
+路由规则里的`redirect`可用于重定向
+
+```js
+redirect: {
+    name: 'content',
+    params: {
+        id: 1,
+    }
+}
+```
+
+**路由：别名**
+
+> 我们在路由规则里使用`alias`属性给路由规则定义别名。
+> 这样，在访问about路由时候，实际上解析到的是`/content/3`，但地址栏显示还是`about`
+
+```js
+{path: '/content/3', component: content, alias: ['/about']}
+```
+
+**路由：美化地址，隐藏锚点**
+
+需要web服务器做相应配置。
+
+在路由规则里定义模式
+
+```js
+let router = new VueRouter({
+    // 开启history模式
+    mode: 'history',
+    routes
+});
+```
+
+**路由：404页面**
+
+```js
+let routes = [
+    {path: '/', component: home},
+    // 这条规则会匹配我们路由规则里没有定义的路由。
+    {path: '*', component: NotFound}
+]
+```
+
+**路由：设置过渡动画**
+
+使用`transition`标签可以设置动画
+
+```html
+<transition enter-active-class="xxx-class">
+    <!-- 这里可以包含组件的模板，也可以是路由视图 -->
+</transition>
+```
+
+---
+
+### Vuex
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="vue.js"></script>
+    <script src="vuex.js"></script>
+    <link href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <title>Vuex.state</title>
+</head>
+
+<body>
+    <div id="app" class="container">
+        <cart></cart>
+    </div>
+</body>
+
+<!-- 购物车组件模板 -->
+<script type="text/x-template" id="cart">
+    <div>
+        <table class="table table-sm">
+            <tr class="thead-dark">
+                <th>ID</th>
+                <th>商品名称</th>
+                <th>价格</th>
+            </tr>
+            <tr v-for="v in goods">
+                <td>{{ v.id }}</td>
+                <td>{{ v.title }}</td>
+                <td>{{ v.price }}</td>
+            </tr>
+        </table>
+        <div class="alert alert-success">总价：{{ totalPrice }} 元</div>
+    </div>
+</script>
+
+<script>
+    // 定义一个购物车组件
+    let cart = {
+        template: '#cart',
+        // 因为购物车里的商品数量及总价是动态变化的，所以我们用计算属性更方便一些
+        // 我们在计算属性里，将Vuex仓库里需要的数据拿到这里，分发到组件的数据中
+        computed: {
+            totalPrice () {
+                return this.$store.state.totalPrice;
+            },
+            goods () {
+                return this.$store.state.goods;
+            }
+        }
+    }
+
+    // 实例化Vuex
+    let store = new Vuex.Store({
+        // 这个属性相当于一个仓库，相当于Vue根实例的data属性
+        // 可以在其中定义一些属性，这些属性是全局的，在哪里都可以访问到
+        state: {
+            // 模拟购物车总价
+            totalPrice: 99,
+            // 模拟商品数据
+            goods: [
+                {id: 1, title: 'iPhone 7 Plus', price: 399},
+                {id: 2, title: 'iPhone 8 Plus', price: 599},
+                {id: 3, title: 'iPhone X Plus', price: 799},
+            ],
+        }
+    });
+
+    // 实例化Vue
+    let app = new Vue({
+        el: '#app',
+        store,
+        components: {
+            cart
+        }
+    });
+</script>
+
+</html>
+```
+
+![vuex](https://ws1.sinaimg.cn/large/006tKfTcly1fphcsmqfn1j31kw0bzq34.jpg)
+
+**Vuex: getters**
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="vue.js"></script>
+    <script src="vuex.js"></script>
+    <link href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <title>Vuex.state</title>
+</head>
+
+<body>
+    <!-- vuex相当于模型的概念 -->
+    <!-- state属性相当于Vue根实例里的data -->
+    <!-- getter属性相当于Vue根实例里的computed -->
+
+    <!-- 为了更近一步地模拟购物车效果，我们需要给每种商品添加一个数量的属性 -->
+    <!-- 然后计算根据：总价 = 单价 * 数量 计算出总价格。 -->
+    <div id="app" class="container">
+        <cart></cart>
+    </div>
+</body>
+
+<!-- 购物车组件模板 -->
+<script type="text/x-template" id="cart">
+    <div>
+        <table class="table table-sm">
+            <tr class="thead-dark">
+                <th>ID</th>
+                <th>商品名称</th>
+                <th>价格</th>
+                <th>数量</th>
+                <th>小计</th>
+            </tr>
+            <tr v-for="v in goods">
+                <td>{{ v.id }}</td>
+                <td>{{ v.title }}</td>
+                <td>{{ v.price }}</td>
+                <td>{{ v.quantity }}</td>
+                <td>{{ v.total }}</td>
+            </tr>
+        </table>
+        <div class="alert alert-success">总价：{{ totalPrice }} 元</div>
+    </div>
+</script>
+
+<script>
+    // 定义一个购物车组件
+    let cart = {
+        template: '#cart',
+
+        computed: {
+            totalPrice () {
+                return this.$store.getters.totalPrice;
+            },
+            goods () {
+                return this.$store.getters.goods;
+            }
+        }
+    }
+
+    // 实例化Vuex
+    let store = new Vuex.Store({
+        // 相当于Vue根实例里的data，存放一些死的数据。
+        state: {
+            // 模拟商品数据
+            goods: [
+                {id: 1, title: 'iPhone 7 Plus', price: 399, quantity: 1},
+                {id: 2, title: 'iPhone 8 Plus', price: 599, quantity: 1},
+                {id: 3, title: 'iPhone X Plus', price: 799, quantity: 1},
+            ],
+        },
+
+        // 相当于Vue根实例里的computed，存放一些计算属性
+        getters: {
+            // 总价格：参数state为$store.state
+            totalPrice (state) {
+                let totalPrice = 0;
+                // 遍历购物车里的数据，根据商品数量和商品价格计算总价
+                state.goods.forEach(item => {
+                    totalPrice += item.price * item.quantity;
+                });
+                return totalPrice;
+            },
+
+            // 为了得到每种商品的小计，我们需要给goods数据里的每种商品添加一个属性
+            // 我们就需要重新搞出一个带有小计属性的goods数据
+            goods (state) {
+                // 把state里的死数据拿过来
+                let goods = state.goods;
+                // 遍历goods，为第一种商品添加小计属性
+                goods.forEach(item => {
+                    item.total = item.price * item.quantity;
+                });
+
+                return goods;
+            }
+        }
+
+    });
+
+    // 实例化Vue
+    let app = new Vue({
+        el: '#app',
+        store,
+        components: {
+            cart
+        }
+    });
+</script>
+
+</html>
+```
+
+![vuex.getters](https://ws3.sinaimg.cn/large/006tKfTcly1fphe4s3oj1j31kw0ay3yn.jpg)
+
+**vuex: mutations**
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="vue.js"></script>
+    <script src="vuex.js"></script>
+    <link href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <title>Vuex.state</title>
+</head>
+
+<body>
+    <!-- vuex相当于模型的概念 -->
+    <!-- state属性相当于Vue根实例里的data -->
+    <!-- getters属性相当于Vue根实例里的computed -->
+    <!-- mutations属性相当于methods，里面声明一些事件方法 -->
+    <div id="app" class="container">
+        <cart></cart>
+    </div>
+</body>
+
+<!-- 购物车组件模板 -->
+<script type="text/x-template" id="cart">
+    <div>
+        <table class="table table-sm">
+            <tr class="thead-dark">
+                <th>ID</th>
+                <th>商品名称</th>
+                <th>价格</th>
+                <th>数量</th>
+                <th>小计</th>
+                <!-- 添加操作栏 -->
+                <th>操作</th>
+            </tr>
+            <tr v-for="(v, index) in goods">
+                <td>{{ v.id }}</td>
+                <td>{{ v.title }}</td>
+                <td>{{ v.price }}</td>
+                <td>
+                    <input type="text" v-model.number="v.quantity" class="form-control form-control-sm">
+                </td>
+                <td>{{ v.total }}</td>
+                <td>
+                    <!-- 当点击删除按钮时，触发remove事件，将当前商品的索引传递给事进 -->
+                    <!-- 事件里根据传递进来的索引，删除模拟数据中对应索引的数据对象达到删除的效果 -->
+                    <button class="btn btn-sm btn-danger" @click="remove(index)">删除</button>
+                </td>
+            </tr>
+        </table>
+        <div class="alert alert-success">总价：{{ totalPrice }} 元</div>
+    </div>
+</script>
+
+<script>
+    // 定义一个购物车组件
+    let cart = {
+        template: '#cart',
+
+        computed: {
+            totalPrice() {
+                return this.$store.getters.totalPrice;
+            },
+            goods() {
+                return this.$store.getters.goods;
+            }
+        },
+
+        methods: {
+            remove(index) {
+                // this.goods.splice(index, 1);
+                // 主动触发mutations里的remove方法，并传递参数index
+                this.$store.commit('remove', index);
+            }
+        }
+    }
+
+    // 实例化Vuex
+    let store = new Vuex.Store({
+        // 相当于Vue根实例里的data，存放一些死的数据。
+        state: {
+            // 模拟商品数据
+            goods: [{
+                    id: 1,
+                    title: 'iPhone 7 Plus',
+                    price: 399,
+                    quantity: 1
+                },
+                {
+                    id: 2,
+                    title: 'iPhone 8 Plus',
+                    price: 599,
+                    quantity: 1
+                },
+                {
+                    id: 3,
+                    title: 'iPhone X Plus',
+                    price: 799,
+                    quantity: 1
+                },
+            ],
+        },
+
+        // 相当于Vue根实例里的computed，存放一些计算属性
+        getters: {
+            // 总价格：参数state为$store.state
+            totalPrice(state) {
+                let totalPrice = 0;
+                // 遍历购物车里的数据，根据商品数量和商品价格计算总价
+                state.goods.forEach(item => {
+                    totalPrice += item.price * item.quantity;
+                });
+                return totalPrice;
+            },
+
+            // 为了得到每种商品的小计，我们需要给goods数据里的每种商品添加一个属性
+            // 我们就需要重新搞出一个带有小计属性的goods数据
+            goods(state) {
+                // 把state里的死数据拿过来
+                let goods = state.goods;
+                // 遍历goods，为第一种商品添加小计属性
+                goods.forEach(item => {
+                    item.total = item.price * item.quantity;
+                });
+
+                return goods;
+            },
+        },
+
+        // 事件声明的的地方，相当于methods
+        mutations: {
+            remove(state, index) {
+                state.goods.splice(index, 1);
+            }
+        }
+
+    });
+
+    // 实例化Vue
+    let app = new Vue({
+        el: '#app',
+        store,
+        components: {
+            cart
+        }
+    });
+</script>
+
+</html>
 ```
