@@ -1998,3 +1998,328 @@ let routes = [
 
 </html>
 ```
+
+**vuex：actions获取数据**
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="vue.js"></script>
+    <script src="vuex.js"></script>
+    <script src="./node_modules/axios/dist/axios.min.js"></script>
+    <link href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <title>Vuex.state</title>
+</head>
+
+<body>
+    <!-- vuex相当于模型的概念 -->
+    <!-- state属性相当于Vue根实例里的data -->
+    <!-- getters属性相当于Vue根实例里的computed -->
+    <!-- mutations属性相当于methods，里面声明一些事件方法 -->
+    <!-- actions 专门用来初始化数据（从后台异步获取） -->
+    <div id="app" class="container">
+        <cart></cart>
+    </div>
+</body>
+
+<!-- 购物车组件模板 -->
+<script type="text/x-template" id="cart">
+    <div>
+        <table class="table table-sm">
+            <tr class="thead-dark">
+                <th>ID</th>
+                <th>商品名称</th>
+                <th>价格</th>
+                <th>数量</th>
+                <th>小计</th>
+                <th>操作</th>
+            </tr>
+            <tr v-for="(v, index) in goods">
+                <td>{{ v.id }}</td>
+                <td>{{ v.title }}</td>
+                <td>{{ v.price }}</td>
+                <td>
+                    <input type="text" v-model.number="v.quantity" class="form-control form-control-sm">
+                </td>
+                <td>{{ v.total }}</td>
+                <td>
+                    <!-- 当点击删除按钮时，触发remove事件，将当前商品的索引传递给事进 -->
+                    <!-- 事件里根据传递进来的索引，删除模拟数据中对应索引的数据对象达到删除的效果 -->
+                    <button class="btn btn-sm btn-danger" @click="remove(index)">删除</button>
+                </td>
+            </tr>
+        </table>
+        <div class="alert alert-success">总价：{{ totalPrice }} 元</div>
+    </div>
+</script>
+
+<script>
+    // 定义一个购物车组件
+    let cart = {
+        template: '#cart',
+
+        computed: {
+            totalPrice() {
+                return this.$store.getters.totalPrice;
+            },
+            goods() {
+                return this.$store.getters.goods;
+            }
+        },
+
+        methods: {
+            remove(index) {
+                // this.goods.splice(index, 1);
+                // 主动触发mutations里的remove方法，并传递参数index
+                this.$store.commit('remove', index);
+            }
+        }
+    }
+
+    // 实例化Vuex
+    let store = new Vuex.Store({
+        // 相当于Vue根实例里的data，存放一些死的数据。
+        state: {
+            // 模拟商品数据
+            goods: [],
+        },
+
+        // 相当于Vue根实例里的computed，存放一些计算属性
+        getters: {
+            // 总价格：参数state为$store.state
+            totalPrice(state) {
+                let totalPrice = 0;
+                // 遍历购物车里的数据，根据商品数量和商品价格计算总价
+                state.goods.forEach(item => {
+                    totalPrice += item.price * item.quantity;
+                });
+                return totalPrice;
+            },
+
+            // 为了得到每种商品的小计，我们需要给goods数据里的每种商品添加一个属性
+            // 我们就需要重新搞出一个带有小计属性的goods数据
+            goods(state) {
+                // 把state里的死数据拿过来
+                let goods = state.goods;
+                // 遍历goods，为第一种商品添加小计属性
+                goods.forEach(item => {
+                    item.total = item.price * item.quantity;
+                });
+
+                return goods;
+            },
+        },
+
+        // 事件声明的的地方，相当于methods
+        mutations: {
+            remove(state, index) {
+                state.goods.splice(index, 1);
+            },
+
+            // 初始化购物车数据
+            setGoods(state, data) {
+                state.goods = data;
+            }
+        },
+
+        // 从后台异步请求数据
+        actions: {
+            inittialData(store) {
+                axios.get('actions.php').then(function (response) {
+                    // 将获取来的购物车数据提交到初始化购物车数据的方法
+                    store.commit('setGoods', response.data);
+                });
+            }
+        }
+    });
+
+    // 实例化Vue
+    let app = new Vue({
+        el: '#app',
+        store,
+        components: {
+            cart
+        },
+        // 在实例化VUE的时候的挂载点触发异步获取数据的事件。
+        mounted() {
+            this.$store.dispatch('inittialData');
+        }
+    });
+</script>
+
+</html>
+```
+
+**vuex: modules**
+
+> 模块化
+> 当我们的应用越来越大的以后，代码如果都写在一起将变得难以维护。
+> 采用模块化开发，可以有效避免。
+> 使代码结构更清晰，易于维护。
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="vue.js"></script>
+    <script src="vuex.js"></script>
+    <script src="./node_modules/axios/dist/axios.min.js"></script>
+    <link href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <title>Vuex.modules</title>
+</head>
+
+<body>
+    <!-- 模块化 -->
+    <div id="app" class="container">
+        <cart></cart>
+    </div>
+</body>
+
+<!-- 购物车组件模板 -->
+<script type="text/x-template" id="cart">
+    <div>
+        <table class="table table-sm">
+            <tr class="thead-dark">
+                <th>ID</th>
+                <th>商品名称</th>
+                <th>价格</th>
+                <th>数量</th>
+                <th>小计</th>
+                <th>操作</th>
+            </tr>
+            <tr v-for="(v, index) in goods">
+                <td>{{ v.id }}</td>
+                <td>{{ v.title }}</td>
+                <td>{{ v.price }}</td>
+                <td>
+                    <input type="text" v-model.number="v.quantity" class="form-control form-control-sm">
+                </td>
+                <td>{{ v.total }}</td>
+                <td>
+                    <!-- 当点击删除按钮时，触发remove事件，将当前商品的索引传递给事进 -->
+                    <!-- 事件里根据传递进来的索引，删除模拟数据中对应索引的数据对象达到删除的效果 -->
+                    <button class="btn btn-sm btn-danger" @click="remove(index)">删除</button>
+                </td>
+            </tr>
+        </table>
+        <div class="alert alert-success">总价：{{ totalPrice }} 元</div>
+    </div>
+</script>
+
+<script>
+    // 定义一个购物车组件
+    let cart = {
+        template: '#cart',
+
+        computed: {
+            totalPrice() {
+                return this.$store.getters.totalPrice;
+            },
+            goods() {
+                return this.$store.getters.goods;
+            }
+        },
+
+        methods: {
+            remove(index) {
+                // this.goods.splice(index, 1);
+                // 主动触发mutations里的remove方法，并传递参数index
+                this.$store.commit('remove', index);
+            }
+        }
+    }
+
+    // 定义购物车模块
+    const cartModule = {
+        state: {
+            // 模拟商品数据
+            goods: [],
+        },
+
+        getters: {
+            // 总价格：参数state为$store.state
+            totalPrice(state) {
+                let totalPrice = 0;
+                // 遍历购物车里的数据，根据商品数量和商品价格计算总价
+                state.goods.forEach(item => {
+                    totalPrice += item.price * item.quantity;
+                });
+                return totalPrice;
+            },
+
+            // 为了得到每种商品的小计，我们需要给goods数据里的每种商品添加一个属性
+            // 我们就需要重新搞出一个带有小计属性的goods数据
+            goods(state) {
+                // 把state里的死数据拿过来
+                let goods = state.goods;
+                // 遍历goods，为第一种商品添加小计属性
+                goods.forEach(item => {
+                    item.total = item.price * item.quantity;
+                });
+
+                return goods;
+            },
+        },
+
+        mutations: {
+            remove(state, index) {
+                state.goods.splice(index, 1);
+            },
+
+            // 初始化购物车数据
+            setGoods(state, data) {
+                state.goods = data;
+            }
+        },
+
+        actions: {
+            inittialData(store) {
+                axios.get('actions.php').then(function (response) {
+                    // 将获取来的购物车数据提交到初始化购物车数据的方法
+                    store.commit('setGoods', response.data);
+                });
+            }
+        }
+    };
+
+    // 实例化Vuex
+    let store = new Vuex.Store({
+        // 启用命名空间
+        // 不启用命名空间的时候，state的作用域是局部的，其它三个属性：getters, mutations, actions的作用域都是全局的。
+        // 启用命名空间以后，全部都是局部的
+        namespaced: true,
+        // 模块
+        modules: {
+            cart: cartModule
+        }
+    });
+
+    // 实例化Vue
+    let app = new Vue({
+        el: '#app',
+        store,
+        components: {
+            cart
+        },
+        // 在实例化VUE的时候的挂载点触发异步获取数据的事件。
+        mounted() {
+            this.$store.dispatch('inittialData');
+        }
+    });
+</script>
+
+</html>
+```
+
+---
+
+**vue-cli**
